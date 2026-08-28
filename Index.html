@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+    body { background-color: #f4f6f8; padding: 12px; }
+
+    .app-container { max-width: 900px; margin: 0 auto; }
+
+    .sidebar-title { font-size: 13px; font-weight: bold; color: #5f6368; letter-spacing: 0.5px; margin-bottom: 15px; text-transform: uppercase; }
+    .tema-block { margin-bottom: 25px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; }
+    .tema-title { font-size: 13px; font-weight: 800; color: #0f3d65; text-transform: uppercase; margin-bottom: 12px; border-bottom: 2px solid #e8f0fe; padding-bottom: 5px; }
+    
+    .grid-num { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+    
+    .btn-num {
+      height: 42px; background-color: #ffffff; border: 1px solid #dcdfe6; border-radius: 6px;
+      font-weight: 600; font-size: 14px; color: #303133; cursor: pointer; transition: 0.2s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .btn-num:hover { background-color: #f0f7ff; border-color: #1a73e8; color: #1a73e8; }
+    .btn-num.active { border: 2px solid #1a73e8; font-weight: bold; background-color: #e8f0fe; }
+    .btn-num.aprobado { background-color: #2e8b57; color: #ffffff; border-color: #2e8b57; }
+    .btn-num.repasar { background-color: #b8860b; color: #ffffff; border-color: #b8860b; }
+
+    /* Tarjeta desplegable debajo de la grilla de números */
+    .card-desplegable {
+      grid-column: 1 / -1;
+      background: #ffffff;
+      border: 2px solid #1a73e8;
+      border-radius: 8px;
+      padding: 18px;
+      margin-top: 10px;
+      display: none;
+      flex-direction: column;
+      gap: 15px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .badge-tema { font-size: 11px; font-weight: 700; color: #1a73e8; text-transform: uppercase; }
+    .pregunta-num { font-size: 16px; font-weight: bold; color: #202124; }
+    .pregunta-texto { font-size: 16px; color: #202124; line-height: 1.5; }
+    
+    .respuesta-box { background: #e8f0fe; border-radius: 6px; padding: 14px; border-left: 4px solid #1a73e8; }
+    .respuesta-box strong { color: #174ea6; font-size: 11px; display: block; margin-bottom: 4px; }
+    .respuesta-texto { color: #174ea6; font-size: 15px; line-height: 1.4; font-weight: 600; }
+
+    /* Botones de Evaluación */
+    .eval-buttons { display: flex; gap: 10px; margin-top: 5px; }
+    .btn-eval { flex: 1; padding: 12px; border: none; border-radius: 6px; font-weight: bold; color: white; cursor: pointer; text-transform: uppercase; font-size: 13px; text-align: center; }
+    .btn-aprobado { background-color: #2e8b57; }
+    .btn-repasar { background-color: #b8860b; }
+    .btn-eval:hover { opacity: 0.9; }
+
+    @media (max-width: 600px) {
+      .grid-num { grid-template-columns: repeat(4, 1fr); }
+      .eval-buttons { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-container">
+  <div class="sidebar-title">PREGUNTAS DEL EXAMEN</div>
+  <div id="contenedor-temas">Cargando preguntas desde Google Sheets...</div>
+</div>
+
+<!-- Plantilla de la tarjeta desplegable -->
+<div id="card-template" class="card-desplegable">
+  <div class="badge-tema" id="card-tema"></div>
+  <div class="pregunta-num" id="card-num"></div>
+  <div class="pregunta-texto" id="card-pregunta"></div>
+  
+  <div class="respuesta-box">
+    <strong>RESPUESTA ESPERADA:</strong>
+    <div class="respuesta-texto" id="card-respuesta"></div>
+  </div>
+
+  <div class="eval-buttons">
+    <button class="btn-eval btn-aprobado" onclick="evaluarYOcultar('aprobado')">✓ APROBADO</button>
+    <button class="btn-eval btn-repasar" onclick="evaluarYOcultar('repasar')">↻ REPASAR</button>
+  </div>
+</div>
+
+<script>
+  const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQjgx-MIWTLoFrK6MRUfP-pR7-s7B8Rvd-71Hqui-GZ1Rs3-hyrfiHBPoMvA0nbHjq9JvyewtrtlurC/pub?output=csv';
+
+  let btnActivo = null;
+  const cardTemplate = document.getElementById('card-template');
+
+  async function cargarPreguntas() {
+    try {
+      const response = await fetch(CSV_URL);
+      const data = await response.text();
+      const filas = parseCSV(data);
+      
+      const temas = {};
+
+      for (let i = 1; i < filas.length; i++) {
+        const [tema, num, preg, resp] = filas[i];
+        if (!tema || !num) continue;
+        
+        if (!temas[tema]) temas[tema] = [];
+        temas[tema].push({ num: num.trim(), pregunta: preg ? preg.trim() : '', respuesta: resp ? resp.trim() : '' });
+      }
+
+      renderizarPreguntas(temas);
+    } catch (e) {
+      document.getElementById('contenedor-temas').innerText = 'Error al cargar las preguntas. Verifica la conexión.';
+    }
+  }
+
+  function renderizarPreguntas(temas) {
+    const contenedor = document.getElementById('contenedor-temas');
+    contenedor.innerHTML = '';
+
+    for (const [tema, preguntas] of Object.entries(temas)) {
+      const block = document.createElement('div');
+      block.className = 'tema-block';
+      
+      const title = document.createElement('div');
+      title.className = 'tema-title';
+      title.innerText = tema;
+      block.appendChild(title);
+
+      const grid = document.createElement('div');
+      grid.className = 'grid-num';
+
+      preguntas.forEach(p => {
+        const btn = document.createElement('button');
+        btn.className = 'btn-num';
+        btn.innerText = p.num;
+        btn.onclick = (e) => togglePregunta(p.num, tema, p.pregunta, p.respuesta, btn, grid);
+        grid.appendChild(btn);
+      });
+
+      block.appendChild(grid);
+      contenedor.appendChild(block);
+    }
+  }
+
+  function togglePregunta(num, tema, pregunta, respuesta, btnElement, gridElement) {
+    // Si presiona el mismo botón que ya está abierto, lo oculta
+    if (btnActivo === btnElement && cardTemplate.style.display === 'flex') {
+      ocultarTarjeta();
+      return;
+    }
+
+    // Limpiar estado activo previo
+    if (btnActivo) btnActivo.classList.remove('active');
+    
+    btnElement.classList.add('active');
+    btnActivo = btnElement;
+
+    // Cargar contenido
+    document.getElementById('card-tema').innerText = tema;
+    document.getElementById('card-num').innerText = 'Pregunta ' + num;
+    document.getElementById('card-pregunta').innerText = pregunta;
+    document.getElementById('card-respuesta').innerText = respuesta;
+
+    // Mover la tarjeta directamente debajo del grid del tema actual
+    gridElement.appendChild(cardTemplate);
+    cardTemplate.style.display = 'flex';
+
+    // Scroll suave hacia la pregunta abierta
+    cardTemplate.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function evaluarYOcultar(estado) {
+    if (btnActivo) {
+      btnActivo.classList.remove('aprobado', 'repasar');
+      btnActivo.classList.add(estado);
+    }
+    ocultarTarjeta();
+  }
+
+  function ocultarTarjeta() {
+    cardTemplate.style.display = 'none';
+    if (btnActivo) {
+      btnActivo.classList.remove('active');
+      btnActivo = null;
+    }
+  }
+
+  function parseCSV(text) {
+    let p = '', c = '', r = [];
+    let q = false;
+    let row = [''];
+    for (let i = 0; i < text.length; i++) {
+      c = text[i];
+      let next = text[i+1];
+      if (c === '"') {
+        if (q && next === '"') { row[row.length - 1] += '"'; i++; }
+        else { q = !q; }
+      } else if (c === ',' && !q) {
+        row.push('');
+      } else if ((c === '\r' || c === '\n') && !q) {
+        if (c === '\r' && next === '\n') { i++; }
+        r.push(row);
+        row = [''];
+      } else {
+        row[row.length - 1] += c;
+      }
+    }
+    if (row.length > 1 || row[0] !== '') r.push(row);
+    return r;
+  }
+
+  cargarPreguntas();
+</script>
+
+</body>
+</html>
