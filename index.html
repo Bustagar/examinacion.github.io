@@ -3,59 +3,115 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Examen Oral - Preguntas</title>
   <style>
     * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
-    body { background-color: #f4f6f8; padding: 12px; }
-
-    .app-container { max-width: 900px; margin: 0 auto; }
-
-    .sidebar-title { font-size: 13px; font-weight: bold; color: #5f6368; letter-spacing: 0.5px; margin-bottom: 15px; text-transform: uppercase; }
-    .tema-block { margin-bottom: 25px; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; }
-    .tema-title { font-size: 13px; font-weight: 800; color: #0f3d65; text-transform: uppercase; margin-bottom: 12px; border-bottom: 2px solid #e8f0fe; padding-bottom: 5px; }
     
-    .grid-num { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+    body {
+      width: 100%;
+      min-height: 100vh;
+      background-color: #f4f6f8;
+      padding: 15px;
+    }
+
+    .app-container { 
+      width: 100%; 
+      max-width: 800px; 
+      margin: 0 auto; 
+    }
+
+    .sidebar-title { 
+      font-size: 14px; 
+      font-weight: bold; 
+      color: #5f6368; 
+      letter-spacing: 0.5px; 
+      margin-bottom: 12px; 
+      text-transform: uppercase; 
+    }
+
+    .tema-block { 
+      margin-bottom: 15px; 
+      background: #ffffff; 
+      border: 1px solid #e0e0e0; 
+      border-radius: 8px; 
+      padding: 14px; 
+      width: 100%;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .tema-title { 
+      font-size: 13px; 
+      font-weight: 800; 
+      color: #0f3d65; 
+      text-transform: uppercase; 
+      margin-bottom: 12px; 
+      border-bottom: 2px solid #e8f0fe; 
+      padding-bottom: 4px; 
+      word-break: break-word;
+    }
+    
+    .grid-num { 
+      display: grid; 
+      grid-template-columns: repeat(5, 1fr); 
+      gap: 8px; 
+      width: 100%;
+    }
     
     .btn-num {
-      height: 42px; background-color: #ffffff; border: 1px solid #dcdfe6; border-radius: 6px;
-      font-weight: 600; font-size: 14px; color: #303133; cursor: pointer; transition: 0.2s;
-      display: flex; align-items: center; justify-content: center;
+      height: 42px; 
+      background-color: #ffffff; 
+      border: 1px solid #dcdfe6; 
+      border-radius: 6px;
+      font-weight: 600; 
+      font-size: 13px; 
+      color: #303133; 
+      cursor: pointer; 
+      transition: 0.2s;
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      width: 100%;
     }
     .btn-num:hover { background-color: #f0f7ff; border-color: #1a73e8; color: #1a73e8; }
     .btn-num.active { border: 2px solid #1a73e8; font-weight: bold; background-color: #e8f0fe; }
-    .btn-num.aprobado { background-color: #2e8b57; color: #ffffff; border-color: #2e8b57; }
+    .btn-num.correcto { background-color: #2e8b57; color: #ffffff; border-color: #2e8b57; }
     .btn-num.repasar { background-color: #b8860b; color: #ffffff; border-color: #b8860b; }
+    .btn-num.incorrecto { background-color: #d93025; color: #ffffff; border-color: #d93025; }
 
-    /* Tarjeta desplegable debajo de la grilla de números */
+    /* Tarjeta desplegable */
     .card-desplegable {
       grid-column: 1 / -1;
       background: #ffffff;
       border: 2px solid #1a73e8;
       border-radius: 8px;
-      padding: 18px;
-      margin-top: 10px;
+      padding: 15px;
+      margin-top: 8px;
       display: none;
       flex-direction: column;
-      gap: 15px;
+      gap: 12px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      width: 100%;
     }
 
     .badge-tema { font-size: 11px; font-weight: 700; color: #1a73e8; text-transform: uppercase; }
-    .pregunta-num { font-size: 16px; font-weight: bold; color: #202124; }
-    .pregunta-texto { font-size: 16px; color: #202124; line-height: 1.5; }
+    .pregunta-num { font-size: 15px; font-weight: bold; color: #202124; }
+    .pregunta-texto { font-size: 15px; color: #202124; line-height: 1.4; word-break: break-word; }
     
-    .respuesta-box { background: #e8f0fe; border-radius: 6px; padding: 14px; border-left: 4px solid #1a73e8; }
+    .respuesta-box { background: #e8f0fe; border-radius: 6px; padding: 12px; border-left: 4px solid #1a73e8; }
     .respuesta-box strong { color: #174ea6; font-size: 11px; display: block; margin-bottom: 4px; }
-    .respuesta-texto { color: #174ea6; font-size: 15px; line-height: 1.4; font-weight: 600; }
+    .respuesta-texto { color: #174ea6; font-size: 14px; line-height: 1.4; font-weight: 600; word-break: break-word; }
 
     /* Botones de Evaluación */
-    .eval-buttons { display: flex; gap: 10px; margin-top: 5px; }
-    .btn-eval { flex: 1; padding: 12px; border: none; border-radius: 6px; font-weight: bold; color: white; cursor: pointer; text-transform: uppercase; font-size: 13px; text-align: center; }
-    .btn-aprobado { background-color: #2e8b57; }
+    .eval-buttons { display: flex; gap: 8px; margin-top: 5px; }
+    .btn-eval { flex: 1; padding: 12px 6px; border: none; border-radius: 6px; font-weight: bold; color: white; cursor: pointer; text-transform: uppercase; font-size: 12px; text-align: center; }
+    .btn-correcto { background-color: #2e8b57; }
     .btn-repasar { background-color: #b8860b; }
+    .btn-incorrecto { background-color: #d93025; }
     .btn-eval:hover { opacity: 0.9; }
 
-    @media (max-width: 600px) {
-      .grid-num { grid-template-columns: repeat(4, 1fr); }
+    @media (max-width: 500px) {
+      .grid-num { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+      .btn-num { height: 38px; font-size: 12px; }
       .eval-buttons { flex-direction: column; }
     }
   </style>
@@ -79,8 +135,9 @@
   </div>
 
   <div class="eval-buttons">
-    <button class="btn-eval btn-aprobado" onclick="evaluarYOcultar('aprobado')">✓ APROBADO</button>
+    <button class="btn-eval btn-correcto" onclick="evaluarYOcultar('correcto')">✓ CORRECTO</button>
     <button class="btn-eval btn-repasar" onclick="evaluarYOcultar('repasar')">↻ REPASAR</button>
+    <button class="btn-eval btn-incorrecto" onclick="evaluarYOcultar('incorrecto')">✗ INCORRECTO</button>
   </div>
 </div>
 
@@ -92,23 +149,30 @@
 
   async function cargarPreguntas() {
     try {
-      const response = await fetch(CSV_URL);
+      const response = await fetch(CSV_URL + '&t=' + new Date().getTime());
       const data = await response.text();
       const filas = parseCSV(data);
       
       const temas = {};
 
       for (let i = 1; i < filas.length; i++) {
-        const [tema, num, preg, resp] = filas[i];
-        if (!tema || !num) continue;
+        const fila = filas[i];
+        if (!fila || fila.length < 2) continue;
+
+        const tema = fila[0] ? fila[0].trim() : '';
+        const num = fila[1] ? fila[1].trim() : '';
+        const preg = fila[2] ? fila[2].trim() : '';
+        const resp = fila[3] ? fila[3].trim() : '';
+
+        if (!tema && !num) continue;
         
         if (!temas[tema]) temas[tema] = [];
-        temas[tema].push({ num: num.trim(), pregunta: preg ? preg.trim() : '', respuesta: resp ? resp.trim() : '' });
+        temas[tema].push({ num: num, pregunta: preg, respuesta: resp });
       }
 
       renderizarPreguntas(temas);
     } catch (e) {
-      document.getElementById('contenedor-temas').innerText = 'Error al cargar las preguntas. Verifica la conexión.';
+      document.getElementById('contenedor-temas').innerText = 'Error al cargar las preguntas.';
     }
   }
 
@@ -142,35 +206,30 @@
   }
 
   function togglePregunta(num, tema, pregunta, respuesta, btnElement, gridElement) {
-    // Si presiona el mismo botón que ya está abierto, lo oculta
     if (btnActivo === btnElement && cardTemplate.style.display === 'flex') {
       ocultarTarjeta();
       return;
     }
 
-    // Limpiar estado activo previo
     if (btnActivo) btnActivo.classList.remove('active');
     
     btnElement.classList.add('active');
     btnActivo = btnElement;
 
-    // Cargar contenido
     document.getElementById('card-tema').innerText = tema;
     document.getElementById('card-num').innerText = 'Pregunta ' + num;
     document.getElementById('card-pregunta').innerText = pregunta;
     document.getElementById('card-respuesta').innerText = respuesta;
 
-    // Mover la tarjeta directamente debajo del grid del tema actual
     gridElement.appendChild(cardTemplate);
     cardTemplate.style.display = 'flex';
 
-    // Scroll suave hacia la pregunta abierta
     cardTemplate.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
   function evaluarYOcultar(estado) {
     if (btnActivo) {
-      btnActivo.classList.remove('aprobado', 'repasar');
+      btnActivo.classList.remove('correcto', 'repasar', 'incorrecto');
       btnActivo.classList.add(estado);
     }
     ocultarTarjeta();
