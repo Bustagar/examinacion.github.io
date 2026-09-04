@@ -54,14 +54,30 @@
     .stat-incorrect { color: #d93025; }
     .stat-pending { color: #7f8c8d; }
 
-    .btn-edit-students {
+    .panel-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 5px;
+    }
+
+    .btn-action-link {
       background: none;
       border: none;
       color: #1a73e8;
       font-size: 12px;
       font-weight: bold;
       cursor: pointer;
-      text-align: right;
+      text-decoration: underline;
+    }
+
+    .btn-reset-exam {
+      background: none;
+      border: none;
+      color: #d93025;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
       text-decoration: underline;
     }
 
@@ -307,6 +323,7 @@
 
 <div class="app-container">
   
+  <!-- Panel de Estadísticas -->
   <div class="top-panel">
     <div class="stats-bar">
       <div class="stat-card">
@@ -326,13 +343,17 @@
         <div class="stat-label stat-pending">Pendientes</div>
       </div>
     </div>
-    <button class="btn-edit-students" onclick="abrirModalInicial()">👥 Administrar lista de estudiantes</button>
+    <div class="panel-actions">
+      <button class="btn-action-link" onclick="abrirModalInicial()">👥 Administrar estudiantes</button>
+      <button class="btn-reset-exam" onclick="reiniciarExamenCompleto()">↺ Reiniciar todo</button>
+    </div>
   </div>
 
   <div class="sidebar-title">PREGUNTAS DEL EXAMEN</div>
   <div id="contenedor-temas">Cargando preguntas desde Google Sheets...</div>
 </div>
 
+<!-- Plantilla de la tarjeta desplegable -->
 <div id="card-template" class="card-desplegable">
   <div class="badge-tema" id="card-tema"></div>
   <div class="pregunta-num" id="card-num"></div>
@@ -350,6 +371,7 @@
   </div>
 </div>
 
+<!-- Modal para Registro Inicial y Seleccionar Alumno -->
 <div class="modal-overlay" id="modal-estudiantes">
   <div class="modal-box">
     <div class="modal-title" id="modal-titulo">Registro de Estudiantes</div>
@@ -373,17 +395,26 @@
   let btnActivo = null;
   let pregActivaData = null;
   const cardTemplate = document.getElementById('card-template');
-  const evaluaciones = {}; 
+  
+  let evaluaciones = JSON.parse(localStorage.getItem('evaluaciones_examen') || '{}'); 
   let estudiantes = JSON.parse(localStorage.getItem('lista_estudiantes') || '[]');
   let totalPreguntas = 0;
 
   window.onload = function() {
-    abrirModalInicial();
+    if (estudiantes.length === 0) {
+      abrirModalInicial();
+    } else {
+      cerrarModal();
+    }
     cargarPreguntas();
   };
 
   function guardarEstudiantesLocal() {
     localStorage.setItem('lista_estudiantes', JSON.stringify(estudiantes));
+  }
+
+  function guardarEvaluacionesLocal() {
+    localStorage.setItem('evaluaciones_examen', JSON.stringify(evaluaciones));
   }
 
   function agregarEstudiante() {
@@ -407,12 +438,12 @@
     if (e.key === 'Enter') agregarEstudiante();
   }
 
-  // 1. Pantalla de carga inicial de nombres
   function abrirModalInicial() {
     document.getElementById('modal-titulo').innerText = 'Registro de Estudiantes';
     document.getElementById('modal-subtitulo').innerText = 'Agrega los nombres de los estudiantes uno a uno:';
     document.getElementById('box-agregar-input').style.display = 'flex';
-    document.getElementById('btn-principal-modal').innerText = 'Comenzar Examen';
+    document.getElementById('btn-principal-modal').style.display = 'block';
+    document.getElementById('btn-principal-modal').innerText = 'Ir al Examen';
     document.getElementById('btn-cancelar-modal').style.display = 'none';
 
     renderizarListaModalInicial();
@@ -448,7 +479,6 @@
     });
   }
 
-  // 2. Pantalla de selección cuando se presiona REPASAR
   function abrirModalSeleccionRepasar() {
     if (estudiantes.length === 0) {
       alert("Primero debes registrar al menos a un estudiante.");
@@ -488,7 +518,7 @@
 
   async function cargarPreguntas() {
     try {
-      const response = await fetch(CSV_URL + '&t=' + new Date().getTime());
+      const response = await fetch(CSV_URL + '&t=' + Date.now(), { cache: 'no-store' });
       const data = await response.text();
       const filas = parseCSV(data);
       
@@ -539,8 +569,16 @@
         btn.className = 'btn-num';
         btn.id = 'btn-p-' + p.id;
         
-        btn.innerHTML = `<span>${p.num}</span><span class="student-tag" id="tag-p-${p.id}"></span>`;
-        
+        const evalGuardada = evaluaciones[p.id];
+        let tagTexto = '';
+        if (evalGuardada) {
+          btn.classList.add(evalGuardada.estado);
+          if (evalGuardada.estudiante) {
+            tagTexto = evalGuardada.estudiante;
+          }
+        }
+
+        btn.innerHTML = `<span>${p.num}</span><span class="student-tag" id="tag-p-${p.id}">${tagTexto}</span>`;
         btn.onclick = (e) => togglePregunta(p, btn, grid, tema);
         grid.appendChild(btn);
       });
@@ -580,6 +618,8 @@
         estado: estado,
         estudiante: estudianteNombre
       };
+      
+      guardarEvaluacionesLocal();
 
       btnActivo.classList.remove('correcto', 'repasar', 'incorrecto');
       btnActivo.classList.add(estado);
@@ -600,6 +640,18 @@
       btnActivo.classList.remove('active');
       btnActivo = null;
       pregActivaData = null;
+    }
+  }
+
+  function reiniciarExamenCompleto() {
+    if (confirm("¿Estás seguro de que deseas reiniciar TODO?\n\nSe borrarán las respuestas del examen Y la lista de estudiantes.")) {
+      evaluaciones = {};
+      estudiantes = [];
+      localStorage.removeItem('evaluaciones_examen');
+      localStorage.removeItem('lista_estudiantes');
+      
+      cargarPreguntas();
+      abrirModalInicial();
     }
   }
 
