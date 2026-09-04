@@ -16,9 +16,78 @@
 
     .app-container { 
       width: 100%; 
-      max-width: 800px; 
+      max-width: 850px; 
       margin: 0 auto; 
     }
+
+    /* Panel Superior: Estudiantes y Estadísticas */
+    .top-panel {
+      background: #ffffff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .student-input-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      align-items: center;
+    }
+
+    .student-input-group label {
+      font-size: 13px;
+      font-weight: bold;
+      color: #303133;
+      white-space: nowrap;
+    }
+
+    .student-input-group input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid #dcdfe6;
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .student-input-group input:focus {
+      border-color: #1a73e8;
+    }
+
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      border-top: 1px solid #f0f0f0;
+      padding-top: 12px;
+    }
+
+    .stat-card {
+      text-align: center;
+      padding: 8px 4px;
+      border-radius: 6px;
+      background: #f8f9fa;
+    }
+
+    .stat-number {
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .stat-correct { color: #2e8b57; }
+    .stat-repasar { color: #b8860b; }
+    .stat-incorrect { color: #d93025; }
+    .stat-pending { color: #7f8c8d; }
 
     .sidebar-title { 
       font-size: 14px; 
@@ -68,10 +137,23 @@
       cursor: pointer; 
       transition: 0.2s;
       display: flex; 
+      flex-direction: column;
       align-items: center; 
       justify-content: center;
       width: 100%;
+      position: relative;
     }
+
+    .btn-num .student-tag {
+      font-size: 8px;
+      font-weight: bold;
+      max-width: 90%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      margin-top: 1px;
+    }
+
     .btn-num:hover { background-color: #f0f7ff; border-color: #1a73e8; color: #1a73e8; }
     .btn-num.active { border: 2px solid #1a73e8; font-weight: bold; background-color: #e8f0fe; }
     .btn-num.correcto { background-color: #2e8b57; color: #ffffff; border-color: #2e8b57; }
@@ -88,12 +170,20 @@
       margin-top: 8px;
       display: none;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.08);
       width: 100%;
     }
 
+    .card-header-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
     .badge-tema { font-size: 11px; font-weight: 700; color: #1a73e8; text-transform: uppercase; }
+    .badge-estudiante { font-size: 11px; font-weight: 700; color: #5f6368; background: #e8eaed; padding: 3px 8px; border-radius: 4px; }
+    
     .pregunta-num { font-size: 15px; font-weight: bold; color: #202124; }
     .pregunta-texto { font-size: 15px; color: #202124; line-height: 1.4; word-break: break-word; }
     
@@ -111,21 +201,56 @@
 
     @media (max-width: 500px) {
       .grid-num { grid-template-columns: repeat(4, 1fr); gap: 6px; }
-      .btn-num { height: 38px; font-size: 12px; }
+      .btn-num { height: 40px; font-size: 12px; }
       .eval-buttons { flex-direction: column; }
+      .student-input-group { flex-direction: column; align-items: flex-start; }
+      .student-input-group input { width: 100%; }
+      .stats-bar { grid-template-columns: repeat(2, 1fr); gap: 8px; }
     }
   </style>
 </head>
 <body>
 
 <div class="app-container">
+  
+  <!-- Panel de Control Superior -->
+  <div class="top-panel">
+    <div class="student-input-group">
+      <label for="student-name">Estudiante Actual:</label>
+      <input type="text" id="student-name" placeholder="Escribe el nombre del alumno aquí...">
+    </div>
+    
+    <div class="stats-bar">
+      <div class="stat-card">
+        <div class="stat-number stat-correct" id="cnt-correcto">0</div>
+        <div class="stat-label stat-correct">Correctas</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number stat-repasar" id="cnt-repasar">0</div>
+        <div class="stat-label stat-repasar">Repasar</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number stat-incorrect" id="cnt-incorrecto">0</div>
+        <div class="stat-label stat-incorrect">Incorrectas</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number stat-pending" id="cnt-pendiente">0</div>
+        <div class="stat-label stat-pending">Pendientes</div>
+      </div>
+    </div>
+  </div>
+
   <div class="sidebar-title">PREGUNTAS DEL EXAMEN</div>
   <div id="contenedor-temas">Cargando preguntas desde Google Sheets...</div>
 </div>
 
 <!-- Plantilla de la tarjeta desplegable -->
 <div id="card-template" class="card-desplegable">
-  <div class="badge-tema" id="card-tema"></div>
+  <div class="card-header-info">
+    <div class="badge-tema" id="card-tema"></div>
+    <div class="badge-estudiante" id="card-estudiante">Sin asignar</div>
+  </div>
+  
   <div class="pregunta-num" id="card-num"></div>
   <div class="pregunta-texto" id="card-pregunta"></div>
   
@@ -145,7 +270,10 @@
   const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQjgx-MIWTLoFrK6MRUfP-pR7-s7B8Rvd-71Hqui-GZ1Rs3-hyrfiHBPoMvA0nbHjq9JvyewtrtlurC/pub?output=csv';
 
   let btnActivo = null;
+  let pregActivaData = null;
   const cardTemplate = document.getElementById('card-template');
+  const evaluaciones = {}; // Almacena el estado y estudiante de cada pregunta por su id
+  let totalPreguntas = 0;
 
   async function cargarPreguntas() {
     try {
@@ -154,6 +282,7 @@
       const filas = parseCSV(data);
       
       const temas = {};
+      totalPreguntas = 0;
 
       for (let i = 1; i < filas.length; i++) {
         const fila = filas[i];
@@ -167,10 +296,12 @@
         if (!tema && !num) continue;
         
         if (!temas[tema]) temas[tema] = [];
-        temas[tema].push({ num: num, pregunta: preg, respuesta: resp });
+        temas[tema].push({ id: num, num: num, pregunta: preg, respuesta: resp });
+        totalPreguntas++;
       }
 
       renderizarPreguntas(temas);
+      actualizarContadores();
     } catch (e) {
       document.getElementById('contenedor-temas').innerText = 'Error al cargar las preguntas.';
     }
@@ -195,8 +326,11 @@
       preguntas.forEach(p => {
         const btn = document.createElement('button');
         btn.className = 'btn-num';
-        btn.innerText = p.num;
-        btn.onclick = (e) => togglePregunta(p.num, tema, p.pregunta, p.respuesta, btn, grid);
+        btn.id = 'btn-p-' + p.id;
+        
+        btn.innerHTML = `<span>${p.num}</span><span class="student-tag" id="tag-p-${p.id}"></span>`;
+        
+        btn.onclick = (e) => togglePregunta(p, btn, grid, tema);
         grid.appendChild(btn);
       });
 
@@ -205,7 +339,7 @@
     }
   }
 
-  function togglePregunta(num, tema, pregunta, respuesta, btnElement, gridElement) {
+  function togglePregunta(pData, btnElement, gridElement, tema) {
     if (btnActivo === btnElement && cardTemplate.style.display === 'flex') {
       ocultarTarjeta();
       return;
@@ -215,11 +349,17 @@
     
     btnElement.classList.add('active');
     btnActivo = btnElement;
+    pregActivaData = pData;
+
+    const estudianteInput = document.getElementById('student-name').value.trim();
+    const estudianteGuardado = evaluaciones[pData.id]?.estudiante;
+    const estudianteMostrar = estudianteInput || estudianteGuardado || 'Sin asignar';
 
     document.getElementById('card-tema').innerText = tema;
-    document.getElementById('card-num').innerText = 'Pregunta ' + num;
-    document.getElementById('card-pregunta').innerText = pregunta;
-    document.getElementById('card-respuesta').innerText = respuesta;
+    document.getElementById('card-estudiante').innerText = 'Alumno: ' + estudianteMostrar;
+    document.getElementById('card-num').innerText = 'Pregunta ' + pData.num;
+    document.getElementById('card-pregunta').innerText = pData.pregunta;
+    document.getElementById('card-respuesta').innerText = pData.respuesta;
 
     gridElement.appendChild(cardTemplate);
     cardTemplate.style.display = 'flex';
@@ -228,9 +368,23 @@
   }
 
   function evaluarYOcultar(estado) {
-    if (btnActivo) {
+    if (btnActivo && pregActivaData) {
+      const estudianteNombre = document.getElementById('student-name').value.trim();
+      
+      evaluaciones[pregActivaData.id] = {
+        estado: estado,
+        estudiante: estudianteNombre
+      };
+
       btnActivo.classList.remove('correcto', 'repasar', 'incorrecto');
       btnActivo.classList.add(estado);
+
+      const tagElement = document.getElementById('tag-p-' + pregActivaData.id);
+      if (tagElement && estudianteNombre) {
+        tagElement.innerText = estudianteNombre;
+      }
+
+      actualizarContadores();
     }
     ocultarTarjeta();
   }
@@ -240,7 +394,27 @@
     if (btnActivo) {
       btnActivo.classList.remove('active');
       btnActivo = null;
+      pregActivaData = null;
     }
+  }
+
+  function actualizarContadores() {
+    let correctos = 0;
+    let repasares = 0;
+    let incorrectos = 0;
+
+    Object.values(evaluaciones).forEach(item => {
+      if (item.estado === 'correcto') correctos++;
+      if (item.estado === 'repasar') repasares++;
+      if (item.estado === 'incorrecto') incorrectos++;
+    });
+
+    const pendientes = totalPreguntas - (correctos + repasares + incorrectos);
+
+    document.getElementById('cnt-correcto').innerText = correctos;
+    document.getElementById('cnt-repasar').innerText = repasares;
+    document.getElementById('cnt-incorrecto').innerText = incorrectos;
+    document.getElementById('cnt-pendiente').innerText = pendientes < 0 ? 0 : pendientes;
   }
 
   function parseCSV(text) {
