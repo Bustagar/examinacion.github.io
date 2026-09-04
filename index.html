@@ -20,7 +20,7 @@
       margin: 0 auto; 
     }
 
-    /* Panel Superior */
+    /* Panel Superior de Estadísticas */
     .top-panel {
       background: #ffffff;
       border: 1px solid #e0e0e0;
@@ -171,8 +171,8 @@
     .modal-overlay {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5);
-      display: none;
+      background: rgba(0,0,0,0.6);
+      display: flex;
       justify-content: center;
       align-items: center;
       z-index: 1000;
@@ -188,7 +188,7 @@
       box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     }
 
-    .modal-title { font-size: 15px; font-weight: bold; margin-bottom: 10px; color: #202124; }
+    .modal-title { font-size: 16px; font-weight: bold; margin-bottom: 6px; color: #202124; }
     .modal-subtitle { font-size: 12px; color: #5f6368; margin-bottom: 12px; }
     
     .add-student-input {
@@ -199,7 +199,7 @@
 
     .add-student-input input {
       flex: 1;
-      padding: 8px 12px;
+      padding: 10px 12px;
       border: 1px solid #dcdfe6;
       border-radius: 6px;
       outline: none;
@@ -207,7 +207,7 @@
     }
 
     .add-student-input button {
-      padding: 8px 14px;
+      padding: 10px 14px;
       background: #1a73e8;
       color: white;
       border: none;
@@ -220,7 +220,7 @@
       display: flex;
       flex-direction: column;
       gap: 6px;
-      max-height: 200px;
+      max-height: 220px;
       overflow-y: auto;
     }
 
@@ -231,21 +231,33 @@
       background: #f8f9fa;
       border: 1px solid #e0e0e0;
       border-radius: 6px;
-      padding: 6px 10px;
+      padding: 8px 12px;
     }
 
     .btn-student-select {
-      background: none;
-      border: none;
+      background: #ffffff;
+      border: 1px solid #1a73e8;
+      color: #1a73e8;
       font-weight: bold;
-      color: #303133;
+      padding: 8px;
+      border-radius: 6px;
       cursor: pointer;
-      text-align: left;
-      flex: 1;
+      text-align: center;
+      width: 100%;
       font-size: 13px;
+      transition: 0.2s;
     }
 
-    .btn-student-select:hover { color: #1a73e8; }
+    .btn-student-select:hover {
+      background: #1a73e8;
+      color: #ffffff;
+    }
+
+    .student-name-text {
+      font-weight: bold;
+      color: #303133;
+      font-size: 13px;
+    }
 
     .btn-delete-student {
       background: none;
@@ -257,16 +269,30 @@
       padding: 0 4px;
     }
 
-    .btn-cancel-modal {
+    .btn-action-modal {
       margin-top: 15px;
       width: 100%;
-      padding: 10px;
-      background: #e0e0e0;
+      padding: 12px;
+      background: #2e8b57;
       border: none;
       border-radius: 6px;
       font-weight: bold;
-      color: #333;
+      color: white;
       cursor: pointer;
+      font-size: 13px;
+      text-transform: uppercase;
+    }
+
+    .btn-cancel-modal {
+      margin-top: 8px;
+      width: 100%;
+      padding: 8px;
+      background: transparent;
+      border: none;
+      color: #5f6368;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 12px;
     }
 
     @media (max-width: 500px) {
@@ -300,7 +326,7 @@
         <div class="stat-label stat-pending">Pendientes</div>
       </div>
     </div>
-    <button class="btn-edit-students" onclick="abrirModalGestionEstudiantes()">👥 Administrar lista de estudiantes</button>
+    <button class="btn-edit-students" onclick="abrirModalInicial()">👥 Administrar lista de estudiantes</button>
   </div>
 
   <div class="sidebar-title">PREGUNTAS DEL EXAMEN</div>
@@ -326,16 +352,18 @@
 
 <div class="modal-overlay" id="modal-estudiantes">
   <div class="modal-box">
-    <div class="modal-title" id="modal-titulo">Lista de Estudiantes</div>
-    <div class="modal-subtitle" id="modal-subtitulo">Añade estudiantes uno a uno:</div>
+    <div class="modal-title" id="modal-titulo">Registro de Estudiantes</div>
+    <div class="modal-subtitle" id="modal-subtitulo">Añade los estudiantes antes de comenzar el examen:</div>
     
-    <div class="add-student-input">
+    <div class="add-student-input" id="box-agregar-input">
       <input type="text" id="nuevo-estudiante-input" placeholder="Nombre del estudiante..." onkeypress="manejarEnter(event)">
       <button onclick="agregarEstudiante()">+ Agregar</button>
     </div>
 
     <div class="students-list" id="lista-estudiantes-modal"></div>
-    <button class="btn-cancel-modal" onclick="cerrarModal()">Cerrar</button>
+
+    <button class="btn-action-modal" id="btn-principal-modal" onclick="cerrarModal()">Comenzar Examen</button>
+    <button class="btn-cancel-modal" id="btn-cancelar-modal" style="display:none;" onclick="cerrarModal()">Cancelar</button>
   </div>
 </div>
 
@@ -348,9 +376,9 @@
   const evaluaciones = {}; 
   let estudiantes = JSON.parse(localStorage.getItem('lista_estudiantes') || '[]');
   let totalPreguntas = 0;
-  let modoSeleccionRepasar = false;
 
   window.onload = function() {
+    abrirModalInicial();
     cargarPreguntas();
   };
 
@@ -365,26 +393,38 @@
       estudiantes.push(nombre);
       guardarEstudiantesLocal();
       input.value = '';
-      renderizarListaModal();
+      renderizarListaModalInicial();
     }
   }
 
   function eliminarEstudiante(nombre) {
     estudiantes = estudiantes.filter(e => e !== nombre);
     guardarEstudiantesLocal();
-    renderizarListaModal();
+    renderizarListaModalInicial();
   }
 
   function manejarEnter(e) {
     if (e.key === 'Enter') agregarEstudiante();
   }
 
-  function renderizarListaModal() {
+  // 1. Pantalla de carga inicial de nombres
+  function abrirModalInicial() {
+    document.getElementById('modal-titulo').innerText = 'Registro de Estudiantes';
+    document.getElementById('modal-subtitulo').innerText = 'Agrega los nombres de los estudiantes uno a uno:';
+    document.getElementById('box-agregar-input').style.display = 'flex';
+    document.getElementById('btn-principal-modal').innerText = 'Comenzar Examen';
+    document.getElementById('btn-cancelar-modal').style.display = 'none';
+
+    renderizarListaModalInicial();
+    document.getElementById('modal-estudiantes').style.display = 'flex';
+  }
+
+  function renderizarListaModalInicial() {
     const contenedor = document.getElementById('lista-estudiantes-modal');
     contenedor.innerHTML = '';
 
     if (estudiantes.length === 0) {
-      contenedor.innerHTML = '<div style="font-size:12px; color:#888; text-align:center; padding:10px;">No hay estudiantes registrados.</div>';
+      contenedor.innerHTML = '<div style="font-size:12px; color:#888; text-align:center; padding:10px;">Aún no hay estudiantes en la lista.</div>';
       return;
     }
 
@@ -392,47 +432,53 @@
       const row = document.createElement('div');
       row.className = 'student-item-row';
       
-      const btnNombre = document.createElement('button');
-      btnNombre.className = 'btn-student-select';
-      btnNombre.innerText = est;
-      
-      if (modoSeleccionRepasar) {
-        btnNombre.onclick = () => seleccionarEstudianteYGuardar(est);
-      }
+      const spanNombre = document.createElement('span');
+      spanNombre.className = 'student-name-text';
+      spanNombre.innerText = est;
 
       const btnEliminar = document.createElement('button');
       btnEliminar.className = 'btn-delete-student';
       btnEliminar.innerText = '✕';
       btnEliminar.title = 'Eliminar';
-      btnEliminar.onclick = (e) => {
-        e.stopPropagation();
-        eliminarEstudiante(est);
-      };
+      btnEliminar.onclick = () => eliminarEstudiante(est);
 
-      row.appendChild(btnNombre);
+      row.appendChild(spanNombre);
       row.appendChild(btnEliminar);
       contenedor.appendChild(row);
     });
   }
 
-  function abrirModalGestionEstudiantes() {
-    modoSeleccionRepasar = false;
-    document.getElementById('modal-titulo').innerText = 'Gestión de Estudiantes';
-    document.getElementById('modal-subtitulo').innerText = 'Agrega o elimina nombres de la lista:';
-    renderizarListaModal();
-    document.getElementById('modal-estudiantes').style.display = 'flex';
-  }
-
+  // 2. Pantalla de selección cuando se presiona REPASAR
   function abrirModalSeleccionRepasar() {
-    modoSeleccionRepasar = true;
+    if (estudiantes.length === 0) {
+      alert("Primero debes registrar al menos a un estudiante.");
+      abrirModalInicial();
+      return;
+    }
+
     document.getElementById('modal-titulo').innerText = '¿Quién debe repasar esta pregunta?';
-    document.getElementById('modal-subtitulo').innerText = 'Haz clic en el estudiante o agrega uno nuevo:';
-    renderizarListaModal();
+    document.getElementById('modal-subtitulo').innerText = 'Selecciona el estudiante de la lista:';
+    document.getElementById('box-agregar-input').style.display = 'none';
+    document.getElementById('btn-principal-modal').style.display = 'none';
+    document.getElementById('btn-cancelar-modal').style.display = 'block';
+
+    const contenedor = document.getElementById('lista-estudiantes-modal');
+    contenedor.innerHTML = '';
+
+    estudiantes.forEach(est => {
+      const btn = document.createElement('button');
+      btn.className = 'btn-student-select';
+      btn.innerText = est;
+      btn.onclick = () => seleccionarEstudianteYGuardar(est);
+      contenedor.appendChild(btn);
+    });
+
     document.getElementById('modal-estudiantes').style.display = 'flex';
   }
 
   function cerrarModal() {
     document.getElementById('modal-estudiantes').style.display = 'none';
+    document.getElementById('btn-principal-modal').style.display = 'block';
   }
 
   function seleccionarEstudianteYGuardar(nombreEstudiante) {
