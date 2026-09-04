@@ -20,7 +20,7 @@
       margin: 0 auto; 
     }
 
-    /* Panel Superior de Estadísticas */
+    /* Panel Superior */
     .top-panel {
       background: #ffffff;
       border: 1px solid #e0e0e0;
@@ -28,6 +28,9 @@
       padding: 12px 15px;
       margin-bottom: 20px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
 
     .stats-bar {
@@ -43,22 +46,24 @@
       background: #f8f9fa;
     }
 
-    .stat-number {
-      font-size: 18px;
-      font-weight: bold;
-    }
-
-    .stat-label {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      margin-top: 2px;
-    }
+    .stat-number { font-size: 18px; font-weight: bold; }
+    .stat-label { font-size: 10px; font-weight: 700; text-transform: uppercase; margin-top: 2px; }
 
     .stat-correct { color: #2e8b57; }
     .stat-repasar { color: #b8860b; }
     .stat-incorrect { color: #d93025; }
     .stat-pending { color: #7f8c8d; }
+
+    .btn-edit-students {
+      background: none;
+      border: none;
+      color: #1a73e8;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      text-align: right;
+      text-decoration: underline;
+    }
 
     .sidebar-title { 
       font-size: 14px; 
@@ -162,6 +167,108 @@
     .btn-incorrecto { background-color: #d93025; }
     .btn-eval:hover { opacity: 0.9; }
 
+    /* Estilos del Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      padding: 15px;
+    }
+
+    .modal-box {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .modal-title { font-size: 15px; font-weight: bold; margin-bottom: 10px; color: #202124; }
+    .modal-subtitle { font-size: 12px; color: #5f6368; margin-bottom: 12px; }
+    
+    .add-student-input {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+
+    .add-student-input input {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid #dcdfe6;
+      border-radius: 6px;
+      outline: none;
+      font-size: 13px;
+    }
+
+    .add-student-input button {
+      padding: 8px 14px;
+      background: #1a73e8;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .students-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .student-item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f8f9fa;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 6px 10px;
+    }
+
+    .btn-student-select {
+      background: none;
+      border: none;
+      font-weight: bold;
+      color: #303133;
+      cursor: pointer;
+      text-align: left;
+      flex: 1;
+      font-size: 13px;
+    }
+
+    .btn-student-select:hover { color: #1a73e8; }
+
+    .btn-delete-student {
+      background: none;
+      border: none;
+      color: #d93025;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 14px;
+      padding: 0 4px;
+    }
+
+    .btn-cancel-modal {
+      margin-top: 15px;
+      width: 100%;
+      padding: 10px;
+      background: #e0e0e0;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      color: #333;
+      cursor: pointer;
+    }
+
     @media (max-width: 500px) {
       .grid-num { grid-template-columns: repeat(4, 1fr); gap: 6px; }
       .btn-num { height: 40px; font-size: 12px; }
@@ -174,7 +281,6 @@
 
 <div class="app-container">
   
-  <!-- Panel de Estadísticas -->
   <div class="top-panel">
     <div class="stats-bar">
       <div class="stat-card">
@@ -194,13 +300,13 @@
         <div class="stat-label stat-pending">Pendientes</div>
       </div>
     </div>
+    <button class="btn-edit-students" onclick="abrirModalGestionEstudiantes()">👥 Administrar lista de estudiantes</button>
   </div>
 
   <div class="sidebar-title">PREGUNTAS DEL EXAMEN</div>
   <div id="contenedor-temas">Cargando preguntas desde Google Sheets...</div>
 </div>
 
-<!-- Plantilla de la tarjeta desplegable -->
 <div id="card-template" class="card-desplegable">
   <div class="badge-tema" id="card-tema"></div>
   <div class="pregunta-num" id="card-num"></div>
@@ -213,8 +319,23 @@
 
   <div class="eval-buttons">
     <button class="btn-eval btn-correcto" onclick="evaluarYOcultar('correcto')">✓ CORRECTO</button>
-    <button class="btn-eval btn-repasar" onclick="evaluarYOcultar('repasar')">↻ REPASAR</button>
+    <button class="btn-eval btn-repasar" onclick="abrirModalSeleccionRepasar()">↻ REPASAR</button>
     <button class="btn-eval btn-incorrecto" onclick="evaluarYOcultar('incorrecto')">✗ INCORRECTO</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-estudiantes">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-titulo">Lista de Estudiantes</div>
+    <div class="modal-subtitle" id="modal-subtitulo">Añade estudiantes uno a uno:</div>
+    
+    <div class="add-student-input">
+      <input type="text" id="nuevo-estudiante-input" placeholder="Nombre del estudiante..." onkeypress="manejarEnter(event)">
+      <button onclick="agregarEstudiante()">+ Agregar</button>
+    </div>
+
+    <div class="students-list" id="lista-estudiantes-modal"></div>
+    <button class="btn-cancel-modal" onclick="cerrarModal()">Cerrar</button>
   </div>
 </div>
 
@@ -224,8 +345,100 @@
   let btnActivo = null;
   let pregActivaData = null;
   const cardTemplate = document.getElementById('card-template');
-  const evaluaciones = {}; // Almacena el estado y estudiante de cada pregunta
+  const evaluaciones = {}; 
+  let estudiantes = JSON.parse(localStorage.getItem('lista_estudiantes') || '[]');
   let totalPreguntas = 0;
+  let modoSeleccionRepasar = false;
+
+  window.onload = function() {
+    cargarPreguntas();
+  };
+
+  function guardarEstudiantesLocal() {
+    localStorage.setItem('lista_estudiantes', JSON.stringify(estudiantes));
+  }
+
+  function agregarEstudiante() {
+    const input = document.getElementById('nuevo-estudiante-input');
+    const nombre = input.value.trim();
+    if (nombre && !estudiantes.includes(nombre)) {
+      estudiantes.push(nombre);
+      guardarEstudiantesLocal();
+      input.value = '';
+      renderizarListaModal();
+    }
+  }
+
+  function eliminarEstudiante(nombre) {
+    estudiantes = estudiantes.filter(e => e !== nombre);
+    guardarEstudiantesLocal();
+    renderizarListaModal();
+  }
+
+  function manejarEnter(e) {
+    if (e.key === 'Enter') agregarEstudiante();
+  }
+
+  function renderizarListaModal() {
+    const contenedor = document.getElementById('lista-estudiantes-modal');
+    contenedor.innerHTML = '';
+
+    if (estudiantes.length === 0) {
+      contenedor.innerHTML = '<div style="font-size:12px; color:#888; text-align:center; padding:10px;">No hay estudiantes registrados.</div>';
+      return;
+    }
+
+    estudiantes.forEach(est => {
+      const row = document.createElement('div');
+      row.className = 'student-item-row';
+      
+      const btnNombre = document.createElement('button');
+      btnNombre.className = 'btn-student-select';
+      btnNombre.innerText = est;
+      
+      if (modoSeleccionRepasar) {
+        btnNombre.onclick = () => seleccionarEstudianteYGuardar(est);
+      }
+
+      const btnEliminar = document.createElement('button');
+      btnEliminar.className = 'btn-delete-student';
+      btnEliminar.innerText = '✕';
+      btnEliminar.title = 'Eliminar';
+      btnEliminar.onclick = (e) => {
+        e.stopPropagation();
+        eliminarEstudiante(est);
+      };
+
+      row.appendChild(btnNombre);
+      row.appendChild(btnEliminar);
+      contenedor.appendChild(row);
+    });
+  }
+
+  function abrirModalGestionEstudiantes() {
+    modoSeleccionRepasar = false;
+    document.getElementById('modal-titulo').innerText = 'Gestión de Estudiantes';
+    document.getElementById('modal-subtitulo').innerText = 'Agrega o elimina nombres de la lista:';
+    renderizarListaModal();
+    document.getElementById('modal-estudiantes').style.display = 'flex';
+  }
+
+  function abrirModalSeleccionRepasar() {
+    modoSeleccionRepasar = true;
+    document.getElementById('modal-titulo').innerText = '¿Quién debe repasar esta pregunta?';
+    document.getElementById('modal-subtitulo').innerText = 'Haz clic en el estudiante o agrega uno nuevo:';
+    renderizarListaModal();
+    document.getElementById('modal-estudiantes').style.display = 'flex';
+  }
+
+  function cerrarModal() {
+    document.getElementById('modal-estudiantes').style.display = 'none';
+  }
+
+  function seleccionarEstudianteYGuardar(nombreEstudiante) {
+    cerrarModal();
+    evaluarYOcultar('repasar', nombreEstudiante);
+  }
 
   async function cargarPreguntas() {
     try {
@@ -314,33 +527,20 @@
     cardTemplate.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
-  function evaluarYOcultar(estado) {
+  function evaluarYOcultar(estado, estudianteNombre = '') {
     if (btnActivo && pregActivaData) {
-      let nombreEstudiante = '';
-
-      // ÚNICAMENTE si presiona REPASAR solicita el nombre
-      if (estado === 'repasar') {
-        const nombrePrevio = evaluaciones[pregActivaData.id]?.estudiante || '';
-        const respuestaPrompt = prompt('Ingresa el nombre de la persona que debe repasar esta pregunta:', nombrePrevio);
-        
-        // Si cancela la ventana pop-up, no hace nada
-        if (respuestaPrompt === null) return; 
-        
-        nombreEstudiante = respuestaPrompt.trim();
-      }
 
       evaluaciones[pregActivaData.id] = {
         estado: estado,
-        estudiante: nombreEstudiante
+        estudiante: estudianteNombre
       };
 
       btnActivo.classList.remove('correcto', 'repasar', 'incorrecto');
       btnActivo.classList.add(estado);
 
-      // Actualizar la etiqueta debajo del número del botón
       const tagElement = document.getElementById('tag-p-' + pregActivaData.id);
       if (tagElement) {
-        tagElement.innerText = nombreEstudiante;
+        tagElement.innerText = estudianteNombre;
       }
 
       actualizarContadores();
@@ -399,8 +599,6 @@
     if (row.length > 1 || row[0] !== '') r.push(row);
     return r;
   }
-
-  cargarPreguntas();
 </script>
 
 </body>
